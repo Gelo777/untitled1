@@ -17,7 +17,6 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +91,7 @@ public class OpenAiClient {
 
     /**
      * Подсказка по тексту (транскрипту) через Chat Completions.
-     *
+     * <p>
      * MVP: возвращаем строго JSON вида {"hint":"...","nextSteps":[...]}.
      * Важно: здесь НЕ используем schema для snapshot, чтобы не мешать.
      */
@@ -182,7 +181,7 @@ public class OpenAiClient {
      * - reasoning_effort=minimal (иначе съедает все токены на reasoning и content пустой)
      * - max_completion_tokens с запасом
      */
-    public OpenAiDtos.SnapshotJson analyzeScreenshot(byte[] imageBytes, String contentType, String lang) {
+    public OpenAiDtos.SnapshotJson analyzeScreenshot(byte[] imageBytes, String contentType, String lang, String question) {
         ensureApiKey();
 
         if (imageBytes == null || imageBytes.length == 0) {
@@ -198,30 +197,25 @@ public class OpenAiClient {
         String dataUrl = "data:" + mime + ";base64," + b64;
 
         String system = """
-                Ты быстрый ассистент на собеседовании. На входе один скриншот.
-                                
-                Твоя задача:
-                1) Определи тип задачи: LIVE_CODING, CODE_REVIEW, ARCHITECTURE, DEBUG, THEORY, UNKNOWN.
-                2) Сразу выдай готовый результат под этот тип.
-                                
-                Правила ответа:
-                - Никаких "я вижу", "возможно", "кажется", "не уверен".
-                - Никаких подтверждений от пользователя.
-                - Если задача лайвкодинг: дай решение + сложность + готовый код.
-                - Если code review: найди проблемы (корректность/производительность/стиль/безопасность) + предложи патч/рефактор.
-                - Если архитектура: предложи дизайн (компоненты, потоки, хранилища), trade-offs, узкие места, SLA, и 1-3 сильных вопроса интервьюеру.
-                - Если дебаг: вероятная причина + конкретные шаги фикса.
-                - Если не хватает данных: дай лучший практичный ответ и укажи, какие 1-2 факта обычно уточняют на собесе (в поле questions).
-                                
-                Верни строго JSON по схеме.
+                Ты ассистент на собеседовании. На входе: вопрос пользователя + один скриншот.
+                
+                                           Сначала определи taskType:
+                                           LIVE_CODING | CODE_REVIEW | ARCHITECTURE | DEBUG | THEORY | UNKNOWN.
+                
+                                           Правила:
+                                           - Если по скриншоту и вопросу НЕТ явной задачи (нет формулировки, нет кода/логов/диаграммы, или контекст обрывочный) — ставь UNKNOWN.
+                                           - Для НЕ-UNKNOWN: отвечай уверенно и конкретно, без "кажется/возможно", без вопросов к пользователю.
+                                           - Для UNKNOWN: НЕ придумывай детали. Дай:
+                                             1) кратко: что видно и чего не хватает,
+                                             2) 1–3 уточняющих вопроса (самые важные),
+                                             3) что можно сделать прямо сейчас (общий лучший совет по теме).
+                
+                                           Формат ответа: строго JSON по схеме.
                 """;
 
         var userContent = List.of(
-                Map.of("type", "text", "text", "Дай ответ по задаче со скриншота."),
-                Map.of("type", "image_url", "image_url", Map.of(
-                        "url", dataUrl,
-                        "detail", "high"
-                ))
+                Map.of("type", "text", "text", "Вопрос:\n" + question + "\n\nДай ответ, используя скриншот как контекст."),
+                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl, "detail", "high"))
         );
 
         var schema = Map.of(

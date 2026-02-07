@@ -1,3 +1,16 @@
+
+licenses:
+  keys:
+    - key: "ABC-123"
+      enabled: true
+      expiresAt: "2026-12-31T23:59:59Z"
+      plan: "PRO"
+    - key: "DEMO-000"
+      enabled: true
+      expiresAt: "2026-03-01T00:00:00Z"
+      plan: "DEMO"
+
+
 server:
   port: 8080
 
@@ -11,10 +24,12 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
-
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 app:
   openai:
-    apiKey: "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"
+    apiKey:  ${OPENAI_API_KEY}
     baseUrl: "https://api.openai.com/v1"
     chatModel: "gpt-5-mini"
     sttModel: "gpt-4o-mini-transcribe"
