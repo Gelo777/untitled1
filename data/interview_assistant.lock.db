@@ -1,0 +1,6 @@
+#FileLock
+#Sun Feb 01 23:56:51 EET 2026
+hostName=192.168.0.8
+id=19c1b3568387f4f1fe5d223eecf83e3a225a11f6366
+method=file
+server=192.168.0.8\:61864

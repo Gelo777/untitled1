@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/interview_assistant;AUTO_SERVER=TRUE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+app:
+  openai:
+    apiKey: "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"
+    baseUrl: "https://api.openai.com/v1"
+    chatModel: "gpt-5-mini"
+    sttModel: "gpt-4o-mini-transcribe"
+    timeoutMs: 20000
